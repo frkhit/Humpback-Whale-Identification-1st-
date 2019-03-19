@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import argparse
+import os
+
 import torch
 
 try:
     import mxnet
+
     has_mxnet = True
 except ImportError:
     has_mxnet = False
@@ -100,9 +102,8 @@ def convert_from_mxnet(model, checkpoint_prefix, debug=False):
 
     return model
 
+
 parser = argparse.ArgumentParser(description='MXNet to PyTorch DPN conversion')
 parser.add_argument('checkpoint_path', metavar='DIR', help='path to mxnet checkpoints')
 parser.add_argument('--model', '-m', metavar='MODEL', default='dpn92',
                     help='model architecture (default: dpn92)')
-
-

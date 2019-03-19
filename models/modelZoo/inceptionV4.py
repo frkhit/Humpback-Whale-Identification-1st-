@@ -1,9 +1,11 @@
 from __future__ import print_function, division, absolute_import
+
+import os
+import sys
+
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-import os
-import sys
 
 __all__ = ['InceptionV4', 'inceptionv4']
 
@@ -37,10 +39,10 @@ class BasicConv2d(nn.Module):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_planes, out_planes,
                               kernel_size=kernel_size, stride=stride,
-                              padding=padding, bias=False) # verify bias false
+                              padding=padding, bias=False)  # verify bias false
         self.bn = nn.BatchNorm2d(out_planes,
-                                 eps=0.001, # value found in tensorflow
-                                 momentum=0.1, # default pytorch value
+                                 eps=0.001,  # value found in tensorflow
+                                 momentum=0.1,  # default pytorch value
                                  affine=True)
         self.relu = nn.ReLU(inplace=True)
 
@@ -77,9 +79,9 @@ class Mixed_4a(nn.Module):
 
         self.branch1 = nn.Sequential(
             BasicConv2d(160, 64, kernel_size=1, stride=1),
-            BasicConv2d(64, 64, kernel_size=(1,7), stride=1, padding=(0,3)),
-            BasicConv2d(64, 64, kernel_size=(7,1), stride=1, padding=(3,0)),
-            BasicConv2d(64, 96, kernel_size=(3,3), stride=1)
+            BasicConv2d(64, 64, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(64, 64, kernel_size=(7, 1), stride=1, padding=(3, 0)),
+            BasicConv2d(64, 96, kernel_size=(3, 3), stride=1)
         )
 
     def forward(self, x):
@@ -164,16 +166,16 @@ class Inception_B(nn.Module):
 
         self.branch1 = nn.Sequential(
             BasicConv2d(1024, 192, kernel_size=1, stride=1),
-            BasicConv2d(192, 224, kernel_size=(1,7), stride=1, padding=(0,3)),
-            BasicConv2d(224, 256, kernel_size=(7,1), stride=1, padding=(3,0))
+            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(224, 256, kernel_size=(7, 1), stride=1, padding=(3, 0))
         )
 
         self.branch2 = nn.Sequential(
             BasicConv2d(1024, 192, kernel_size=1, stride=1),
-            BasicConv2d(192, 192, kernel_size=(7,1), stride=1, padding=(3,0)),
-            BasicConv2d(192, 224, kernel_size=(1,7), stride=1, padding=(0,3)),
-            BasicConv2d(224, 224, kernel_size=(7,1), stride=1, padding=(3,0)),
-            BasicConv2d(224, 256, kernel_size=(1,7), stride=1, padding=(0,3))
+            BasicConv2d(192, 192, kernel_size=(7, 1), stride=1, padding=(3, 0)),
+            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(224, 224, kernel_size=(7, 1), stride=1, padding=(3, 0)),
+            BasicConv2d(224, 256, kernel_size=(1, 7), stride=1, padding=(0, 3))
         )
 
         self.branch3 = nn.Sequential(
@@ -202,8 +204,8 @@ class Reduction_B(nn.Module):
 
         self.branch1 = nn.Sequential(
             BasicConv2d(1024, 256, kernel_size=1, stride=1),
-            BasicConv2d(256, 256, kernel_size=(1,7), stride=1, padding=(0,3)),
-            BasicConv2d(256, 320, kernel_size=(7,1), stride=1, padding=(3,0)),
+            BasicConv2d(256, 256, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(256, 320, kernel_size=(7, 1), stride=1, padding=(3, 0)),
             BasicConv2d(320, 320, kernel_size=3, stride=2)
         )
 
@@ -225,14 +227,14 @@ class Inception_C(nn.Module):
         self.branch0 = BasicConv2d(1536, 256, kernel_size=1, stride=1)
 
         self.branch1_0 = BasicConv2d(1536, 384, kernel_size=1, stride=1)
-        self.branch1_1a = BasicConv2d(384, 256, kernel_size=(1,3), stride=1, padding=(0,1))
-        self.branch1_1b = BasicConv2d(384, 256, kernel_size=(3,1), stride=1, padding=(1,0))
+        self.branch1_1a = BasicConv2d(384, 256, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.branch1_1b = BasicConv2d(384, 256, kernel_size=(3, 1), stride=1, padding=(1, 0))
 
         self.branch2_0 = BasicConv2d(1536, 384, kernel_size=1, stride=1)
-        self.branch2_1 = BasicConv2d(384, 448, kernel_size=(3,1), stride=1, padding=(1,0))
-        self.branch2_2 = BasicConv2d(448, 512, kernel_size=(1,3), stride=1, padding=(0,1))
-        self.branch2_3a = BasicConv2d(512, 256, kernel_size=(1,3), stride=1, padding=(0,1))
-        self.branch2_3b = BasicConv2d(512, 256, kernel_size=(3,1), stride=1, padding=(1,0))
+        self.branch2_1 = BasicConv2d(384, 448, kernel_size=(3, 1), stride=1, padding=(1, 0))
+        self.branch2_2 = BasicConv2d(448, 512, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.branch2_3a = BasicConv2d(512, 256, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.branch2_3b = BasicConv2d(512, 256, kernel_size=(3, 1), stride=1, padding=(1, 0))
 
         self.branch3 = nn.Sequential(
             nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
@@ -281,7 +283,7 @@ class InceptionV4(nn.Module):
             Inception_A(),
             Inception_A(),
             Inception_A(),
-            Reduction_A(), # Mixed_6a
+            Reduction_A(),  # Mixed_6a
             Inception_B(),
             Inception_B(),
             Inception_B(),
@@ -289,7 +291,7 @@ class InceptionV4(nn.Module):
             Inception_B(),
             Inception_B(),
             Inception_B(),
-            Reduction_B(), # Mixed_7a
+            Reduction_B(),  # Mixed_7a
             Inception_C(),
             Inception_C(),
             Inception_C()
@@ -332,4 +334,3 @@ if __name__ == '__main__':
     input = torch.rand((8, 3, 128, 128)).cuda()
     out = mobilenet(input)
     print(out.shape)
-

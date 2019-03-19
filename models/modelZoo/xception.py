@@ -1,9 +1,10 @@
 import math
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from torch.nn import init
-import torch
 
 __all__ = ['xception']
 
@@ -185,10 +186,10 @@ def xception(pretrained=False, **kwargs):
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['xception']))
     return model
+
+
 if __name__ == '__main__':
     mobilenet = xception().cuda()
     input = torch.rand((8, 3, 128, 128)).cuda()
     out = mobilenet(input)
     print(out.shape)
-
-

@@ -3,8 +3,9 @@ ResNet code gently borrowed from
 https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 """
 from __future__ import print_function, division, absolute_import
-from collections import OrderedDict
+
 import math
+from collections import OrderedDict
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -109,6 +110,7 @@ class Bottleneck(nn.Module):
     """
     Base class for bottlenecks that implements `forward()` method.
     """
+
     def forward(self, x):
         residual = x
 
@@ -191,7 +193,6 @@ class SEResNeXtBottleneck(Bottleneck):
                  downsample=None, base_width=4):
         super(SEResNeXtBottleneck, self).__init__()
         width = int(math.floor(planes * (base_width / 64)) * groups)
-
 
         self.conv1 = nn.Conv2d(inplanes, width, kernel_size=1, stride=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width)
@@ -323,7 +324,6 @@ class SENet(nn.Module):
             downsample_padding=downsample_padding
         )
 
-
     def _make_layer(self, block, planes, blocks, groups, reduction, stride=1,
                     downsample_kernel_size=1, downsample_padding=0):
         downsample = None
@@ -344,7 +344,6 @@ class SENet(nn.Module):
 
         return nn.Sequential(*layers)
 
-
     def forward(self, x):
         x = self.layer0(x)
         x = self.layer1(x)
@@ -360,7 +359,6 @@ class SENet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.last_linear(x)
         return x
-
 
 
 def initialize_pretrained_model(model, num_classes, settings):
@@ -417,22 +415,22 @@ def se_resnet152(num_classes=1000, pretrained='imagenet'):
     return model
 
 
-def se_resnext50_32x4d(num_classes=1000,inchannels=1,pretrained='imagenet'):
+def se_resnext50_32x4d(num_classes=1000, inchannels=1, pretrained='imagenet'):
     model = SENet(SEResNeXtBottleneck, [3, 4, 6, 3], groups=32, reduction=16,
                   dropout_p=None, inplanes=64, input_3x3=False,
                   downsample_kernel_size=1, downsample_padding=0,
-                  num_classes=num_classes,inchannels=inchannels)
+                  num_classes=num_classes, inchannels=inchannels)
     if pretrained is not None:
         settings = pretrained_settings['se_resnext50_32x4d'][pretrained]
         initialize_pretrained_model(model, num_classes, settings)
     return model
 
 
-def se_resnext101_32x4d(num_classes=1000, inchannels=1,pretrained='imagenet'):
+def se_resnext101_32x4d(num_classes=1000, inchannels=1, pretrained='imagenet'):
     model = SENet(SEResNeXtBottleneck, [3, 4, 23, 3], groups=32, reduction=16,
                   dropout_p=None, inplanes=64, input_3x3=False,
                   downsample_kernel_size=1, downsample_padding=0,
-                  num_classes=num_classes,inchannels=inchannels)
+                  num_classes=num_classes, inchannels=inchannels)
     if pretrained is not None:
         settings = pretrained_settings['se_resnext101_32x4d'][pretrained]
         initialize_pretrained_model(model, num_classes, settings)
@@ -442,8 +440,8 @@ def se_resnext101_32x4d(num_classes=1000, inchannels=1,pretrained='imagenet'):
 if __name__ == '__main__':
     # cudnn.benchmark = True # This will make network slow ??
     import torch
+
     mobilenet = senet154(num_classes=5005, inchannels=3, pretrained='imagenet').cuda()
     input = torch.rand((8, 3, 256, 512)).cuda()
     out = mobilenet(input)
     print(out.shape)
-

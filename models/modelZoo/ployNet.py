@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import
+
 import torch
 import torch.nn as nn
 from torch.utils import model_zoo
@@ -200,6 +201,7 @@ class ReductionB(nn.Module):
     """A dimensionality reduction block that is placed after stage-b
     Inception-ResNet blocks.
     """
+
     def __init__(self):
         super(ReductionB, self).__init__()
         self.path0 = nn.Sequential(
@@ -483,8 +485,8 @@ def polynet(num_classes=1000, pretrained='imagenet'):
 if __name__ == '__main__':
     # cudnn.benchmark = True # This will make network slow ??
     import torch
+
     mobilenet = polynet(num_classes=1000, pretrained='imagenet').cuda()
     input = torch.rand((8, 4, 256, 512)).cuda()
     out = mobilenet(input)
     print(out.shape)
-

@@ -1,18 +1,17 @@
 import datetime
 import os
-
-from timeit import default_timer as timer
-from dataSet import *
-from models import *
-import torch
 import time
-from utils import *
+from timeit import default_timer as timer
+
+import torch
 from torch.nn.parallel.data_parallel import data_parallel
 
+from dataSet import *
+from models import *
+from utils import *
 
 
 def train_collate(batch):
-
     batch_size = len(batch)
     images = []
     labels = []
@@ -26,8 +25,8 @@ def train_collate(batch):
     labels = torch.from_numpy(np.array(labels))
     return images, labels
 
-def valid_collate(batch):
 
+def valid_collate(batch):
     batch_size = len(batch)
     images = []
     labels = []
@@ -42,11 +41,13 @@ def valid_collate(batch):
     images = torch.stack(images, 0)
     labels = torch.from_numpy(np.array(labels))
     return images, labels, names
+
+
 def transform_train(image, mask, label):
     add_ = 0
     image = cv2.resize(image, (512, 256))
     mask = cv2.resize(mask, (512, 256))
-    mask = mask[:,:, None]
+    mask = mask[:, :, None]
 
     image = np.concatenate([image, mask], 2)
     # if 0:
@@ -58,7 +59,7 @@ def transform_train(image, mask, label):
             image = np.fliplr(image)
             if not label == 'new_whale':
                 add_ += 5004
-        image, mask = image[:,:,:3], image[:,:, 3]
+        image, mask = image[:, :, :3], image[:, :, 3]
     if random.random() < 0.5:
         image, mask = random_angle_rotate(image, mask, angles=(-25, 25))
     # noise
@@ -71,7 +72,7 @@ def transform_train(image, mask, label):
     if random.random() < 0.5:
         index = random.randint(0, 3)
         if index == 0:
-            image = do_brightness_shift(image,0.1)
+            image = do_brightness_shift(image, 0.1)
         elif index == 1:
             image = do_gamma(image, 1)
         elif index == 2:
@@ -79,11 +80,11 @@ def transform_train(image, mask, label):
         elif index == 3:
             image = do_brightness_multiply(image)
     if 1:
-        image, mask = random_erase(image,mask, p=0.5)
+        image, mask = random_erase(image, mask, p=0.5)
     if 1:
-        image, mask = random_shift(image,mask, p=0.5)
+        image, mask = random_shift(image, mask, p=0.5)
     if 1:
-        image, mask = random_scale(image,mask, p=0.5)
+        image, mask = random_scale(image, mask, p=0.5)
     # todo data augment
     if 1:
         if random.random() < 0.5:
@@ -94,6 +95,7 @@ def transform_train(image, mask, label):
     image = image.copy().astype(np.float)
     image = torch.from_numpy(image).div(255).float()
     return image, add_
+
 
 def transform_valid(image, mask):
     images = []
@@ -115,11 +117,12 @@ def transform_valid(image, mask):
     images.append(image)
     return images
 
+
 def eval(model, dataLoader_valid):
     with torch.no_grad():
         model.eval()
         model.mode = 'valid'
-        valid_loss, index_valid= 0, 0
+        valid_loss, index_valid = 0, 0
         all_results = []
         all_labels = []
         for valid_data in dataLoader_valid:
@@ -129,7 +132,7 @@ def eval(model, dataLoader_valid):
             feature, local_feat, results = data_parallel(model, images)
             model.getLoss(feature[::2], local_feat[::2], results[::2], labels)
             results = torch.sigmoid(results)
-            results_zeros = (results[::2, :5004] + results[1::2, 5004:])/2
+            results_zeros = (results[::2, :5004] + results[1::2, 5004:]) / 2
             all_results.append(results_zeros)
             all_labels.append(labels)
             b = len(labels)
@@ -157,7 +160,9 @@ def eval(model, dataLoader_valid):
         valid_loss /= index_valid
         return valid_loss, top1, top5, map5, best_t
 
-def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10, checkPoint_start=0, lr=3e-4, batch_size=36):
+
+def train(freeze=False, fold_index=1, model_name='seresnext50', min_num_class=10, checkPoint_start=0, lr=3e-4,
+          batch_size=36):
     num_classes = 5004 * 2
     model = model_whale(num_classes=num_classes, inchannels=4, model_name=model_name).cuda()
     i = 0
@@ -168,7 +173,7 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
     if freeze:
         model.freeze()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr,  betas=(0.9, 0.99), weight_decay=0.0002)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.99), weight_decay=0.0002)
     # optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0002)
     resultDir = './result/{}_{}'.format(model_name, fold_index)
     ImageDir = resultDir + '/image'
@@ -176,7 +181,7 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
     os.makedirs(checkPoint, exist_ok=True)
     os.makedirs(ImageDir, exist_ok=True)
     log = Logger()
-    log.open(os.path.join(resultDir, 'log_train.txt'), mode= 'a')
+    log.open(os.path.join(resultDir, 'log_train.txt'), mode='a')
     log.write(' start_time :{} \n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     log.write(' batch_size :{} \n'.format(batch_size))
     # Image,Id
@@ -187,11 +192,14 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
     names_valid = data_valid['Image'].tolist()
     labels_valid = data_valid['Id'].tolist()
     num_data = len(names_train)
-    dst_train = WhaleDataset(names_train, labels_train,mode='train',transform_train=transform_train, min_num_classes=min_num_class)
-    dataloader_train = DataLoader(dst_train, shuffle=True, drop_last=True, batch_size=batch_size, num_workers=16, collate_fn=train_collate)
+    dst_train = WhaleDataset(names_train, labels_train, mode='train', transform_train=transform_train,
+                             min_num_classes=min_num_class)
+    dataloader_train = DataLoader(dst_train, shuffle=True, drop_last=True, batch_size=batch_size, num_workers=16,
+                                  collate_fn=train_collate)
     print(dst_train.__len__())
-    dst_valid = WhaleTestDataset(names_valid, labels_valid, mode='valid',transform=transform_valid)
-    dataloader_valid = DataLoader(dst_valid, shuffle=False, batch_size=batch_size * 2, num_workers=8, collate_fn=valid_collate)
+    dst_valid = WhaleTestDataset(names_valid, labels_valid, mode='valid', transform=transform_valid)
+    dataloader_valid = DataLoader(dst_valid, shuffle=False, batch_size=batch_size * 2, num_workers=8,
+                                  collate_fn=valid_collate)
     train_loss = 0.0
     valid_loss = 0.0
     top1, top5, map5 = 0, 0, 0
@@ -206,19 +214,19 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
     skips = []
     if not checkPoint_start == 0:
         log.write('  start from{}, l_rate ={} \n'.format(checkPoint_start, lr))
-        log.write('freeze={}, batch_size={}, min_num_class={} \n'.format(freeze,batch_size, min_num_class))
-        model.load_pretrain(os.path.join(checkPoint, '%08d_model.pth' % (checkPoint_start)),skip=skips)
+        log.write('freeze={}, batch_size={}, min_num_class={} \n'.format(freeze, batch_size, min_num_class))
+        model.load_pretrain(os.path.join(checkPoint, '%08d_model.pth' % (checkPoint_start)), skip=skips)
         ckp = torch.load(os.path.join(checkPoint, '%08d_optimizer.pth' % (checkPoint_start)))
         optimizer.load_state_dict(ckp['optimizer'])
         adjust_learning_rate(optimizer, lr)
         i = checkPoint_start
         epoch = ckp['epoch']
     log.write(
-            ' rate     iter   epoch  | valid   top@1    top@5    map@5  | '
-            'train    top@1    top@5    map@5 |'
-            ' batch    top@1    top@5    map@5 |  time          \n')
+        ' rate     iter   epoch  | valid   top@1    top@5    map@5  | '
+        'train    top@1    top@5    map@5 |'
+        ' batch    top@1    top@5    map@5 |  time          \n')
     log.write(
-            '---------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n')
+        '---------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n')
     start = timer()
 
     start_epoch = epoch
@@ -226,7 +234,7 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
     cycle_epoch = 0
     while i < 10000000:
         for data in dataloader_train:
-            epoch = start_epoch + (i - checkPoint_start) * 4 * batch_size/num_data
+            epoch = start_epoch + (i - checkPoint_start) * 4 * batch_size / num_data
             if i % iter_valid == 0:
                 valid_loss, top1, top5, map5, best_t = \
                     eval(model, dataloader_valid)
@@ -248,9 +256,8 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
                     'optimizer': optimizer.state_dict(),
                     'iter': i,
                     'epoch': epoch,
-                    'best_t':best_t,
+                    'best_t': best_t,
                 }, resultDir + '/checkpoint/%08d_optimizer.pth' % (i))
-
 
             model.train()
 
@@ -258,7 +265,7 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
             images, labels = data
             images = images.cuda()
             labels = labels.cuda().long()
-            global_feat, local_feat, results = data_parallel(model,images)
+            global_feat, local_feat, results = data_parallel(model, images)
             model.getLoss(global_feat, local_feat, results, labels)
             batch_loss = model.loss
 
@@ -276,23 +283,24 @@ def train(freeze=False, fold_index=1, model_name='seresnext50',min_num_class=10,
             train_top1_sum += top1_batch
             train_map5_sum += map5_batch
             if (i + 1) % iter_smooth == 0:
-                train_loss = train_loss_sum/sum
-                top1_train = train_top1_sum/sum
-                map5_train = train_map5_sum/sum
+                train_loss = train_loss_sum / sum
+                top1_train = train_top1_sum / sum
+                map5_train = train_map5_sum / sum
                 train_loss_sum = 0
                 train_top1_sum = 0
                 train_map5_sum = 0
                 sum = 0
 
-            print('\r%0.5f %5.2f k %5.2f  | %0.3f    %0.3f    %0.3f    %0.4f    %0.4f | %0.3f    %0.3f    %0.3f | %0.3f     %0.3f    %0.3f | %s  %d %d' % ( \
+            print(
+                '\r%0.5f %5.2f k %5.2f  | %0.3f    %0.3f    %0.3f    %0.4f    %0.4f | %0.3f    %0.3f    %0.3f | %0.3f     %0.3f    %0.3f | %s  %d %d' % ( \
                     lr, i / 1000, epoch,
-                    valid_loss, top1, top5,map5,best_t,
+                    valid_loss, top1, top5, map5, best_t,
                     train_loss, top1_train, map5_train,
                     batch_loss, top1_batch, map5_batch,
                     time_to_str((timer() - start) / 60), checkPoint_start, i)
                 , end='', flush=True)
             i += 1
-           
+
         pass
 
 
@@ -306,5 +314,5 @@ if __name__ == '__main__':
         checkPoint_start = 0
         lr = 3e-4
         batch_size = 12
-        print(5005%batch_size)
+        print(5005 % batch_size)
         train(freeze, fold_index, model_name, min_num_class, checkPoint_start, lr, batch_size)

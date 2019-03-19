@@ -3,13 +3,15 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
-from collections import OrderedDict
 
 from models.modelZoo.convert_from_mxnet import convert_from_mxnet, has_mxnet
+
 
 def pooling_factor(pool_type='avg'):
     return 2 if pool_type == 'avgmaxc' else 1
@@ -26,7 +28,7 @@ def adaptive_avgmax_pool2d(x, pool_type='avg', padding=0, count_include_pad=Fals
         ], dim=1)
     elif pool_type == 'avgmax':
         x_avg = F.avg_pool2d(
-                x, kernel_size=(x.size(2), x.size(3)), padding=padding, count_include_pad=count_include_pad)
+            x, kernel_size=(x.size(2), x.size(3)), padding=padding, count_include_pad=count_include_pad)
         x_max = F.max_pool2d(x, kernel_size=(x.size(2), x.size(3)), padding=padding)
         x = 0.5 * (x_avg + x_max)
     elif pool_type == 'max':
@@ -42,6 +44,7 @@ def adaptive_avgmax_pool2d(x, pool_type='avg', padding=0, count_include_pad=Fals
 class AdaptiveAvgMaxPool2d(torch.nn.Module):
     """Selectable global pooling layer with dynamic input kernel size
     """
+
     def __init__(self, output_size=1, pool_type='avg'):
         super(AdaptiveAvgMaxPool2d, self).__init__()
         self.output_size = output_size
@@ -72,8 +75,8 @@ class AdaptiveAvgMaxPool2d(torch.nn.Module):
                + 'output_size=' + str(self.output_size) \
                + ', pool_type=' + self.pool_type + ')'
 
-__all__ = ['DPN', 'dpn68', 'dpn68b', 'dpn92', 'dpn98', 'dpn131', 'dpn107']
 
+__all__ = ['DPN', 'dpn68', 'dpn68b', 'dpn92', 'dpn98', 'dpn131', 'dpn107']
 
 model_urls = {
     'dpn68':
@@ -370,6 +373,7 @@ class DPN(nn.Module):
         #     out = self.classifier(x)
         # return out.view(out.size(0), -1)
         return x
+
 
 if __name__ == '__main__':
     # cudnn.benchmark = True # This will make network slow ??
