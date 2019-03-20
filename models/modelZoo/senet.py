@@ -8,7 +8,6 @@ import math
 from collections import OrderedDict
 
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils import model_zoo
 
 __all__ = ['SENet', 'senet154', 'se_resnet50', 'se_resnet101', 'se_resnet152',

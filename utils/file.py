@@ -3,8 +3,6 @@ import os
 import shutil
 import sys
 
-import pandas as pd
-
 
 # log ------------------------------------
 

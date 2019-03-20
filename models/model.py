@@ -1,7 +1,3 @@
-import torch.nn.functional as F
-import torch.nn.utils.weight_norm as weightNorm
-import torchvision.models as tvm
-
 from models.arcFaceloss import *
 from models.modelZoo import *
 from models.triplet_loss import *

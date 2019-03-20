@@ -1,9 +1,7 @@
 import datetime
-import os
 import time
 from timeit import default_timer as timer
 
-import torch
 from torch.nn.parallel.data_parallel import data_parallel
 
 from dataSet import *
